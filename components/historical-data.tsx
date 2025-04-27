@@ -21,7 +21,7 @@ export function HistoricalData ({ shootData, set }: { shootData: any, set: React
   )
 
   return (
-    <Card className="">
+    <Card className="w-screen">
       <CardHeader className="flex flex-row justify-between items-center">
         <div>
           <CardTitle>Verlauf</CardTitle>

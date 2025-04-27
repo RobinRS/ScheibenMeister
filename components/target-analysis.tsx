@@ -116,7 +116,7 @@ export function TargetAnalysis ({ shootData, set }: { shootData: any, set: React
           </TabsContent>
           <TabsContent value="data" className="pt-4">
             <div className="space-y-4">
-              <div className="gap-4 grid grid-cols-2">
+              <div className="gap-4">
                 <div className="space-y-2">
                   <p className="font-medium text-sm">Ergebniss</p>
                   <div className="font-bold text-3xl">{wd(akErgebnis, akErgebnis?.avg)}{akErgebnis && '/100'}</div>

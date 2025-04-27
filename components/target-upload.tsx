@@ -116,7 +116,7 @@ export function TargetUpload ({ shootData, set }: { shootData: any, set: React.D
   }
 
   return (
-    <Card className="">
+    <Card className="w-screen">
       <CardHeader>
         <div className="flex flex-row justify-between w-full">
           <div className="flex flex-col justify-between">
