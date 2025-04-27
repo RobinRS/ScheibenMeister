@@ -166,7 +166,7 @@ export function TargetUpload ({ shootData, set }: { shootData: any, set: React.D
           )}
           <p className="text-muted-foreground text-sm">Klicken und Bild auswählen</p>
           <p className="mt-1 text-muted-foreground text-xs">PNG, JPG or WEBP</p>
-          <input id="target-upload" type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+          <input id="target-upload" type="file" accept="*/*" className="hidden" onChange={handleFileChange} />
         </div>
 
         {isProcessing && (
