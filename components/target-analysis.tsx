@@ -98,7 +98,7 @@ export function TargetAnalysis ({ shootData, set }: { shootData: any, set: React
 
 
   return (
-    <Card>
+    <Card className="overflow-x-hidden">
       <CardHeader>
         <CardTitle>Auswertung</CardTitle>
         <CardDescription>Mustererkennung</CardDescription>
@@ -117,9 +117,16 @@ export function TargetAnalysis ({ shootData, set }: { shootData: any, set: React
           <TabsContent value="data" className="pt-4">
             <div className="space-y-4">
               <div className="gap-4">
-                <div className="space-y-2">
-                  <p className="font-medium text-sm">Ergebniss</p>
-                  <div className="font-bold text-3xl">{wd(akErgebnis, akErgebnis?.avg)}{akErgebnis && '/100'}</div>
+                <div className="space-y-2 grid grid-cols-2">
+                  <div>
+                    <p className="font-medium text-sm">Ergebniss</p>
+                    <div className="font-bold text-3xl">{wd(akErgebnis, akErgebnis?.ergebnis?.reduce((a, b) => parseFloat(a) + parseFloat(b), 0).toFixed(1))}/{akErgebnis && (110.0 * akErgebnis?.ergebnis?.length).toFixed(0)}</div>
+                  </div>
+                  <div className="flex flex-col items-end">
+                    <p className="font-medium text-sm">⌀ Schuss</p>
+                    <div className="font-bold text-3xl">{wd(akErgebnis, akErgebnis?.avg)}</div>
+                  </div>
+
                 </div>
               </div>
 

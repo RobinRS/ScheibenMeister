@@ -53,7 +53,7 @@ export function TargetUpload ({ shootData, set }: { shootData: any, set: React.D
         return null;
       }).filter(score => score !== null);
       const avgScore = JSON.parse(JSON.stringify(scores)).slice((scores.length - 4), scores.length).filter((s) => s >= 7 && s <= 11.2)[0];
-      let fScores = scores.filter(score => score >= 60 && score <= 150).map(score => parseFloat(score.toFixed(1)));
+      let fScores = scores.filter(score => score >= 80 && score <= 120).map(score => parseFloat(score.toFixed(1)));
 
       console.log(fScores);
       if (fScores.length === 0) {
@@ -78,7 +78,7 @@ export function TargetUpload ({ shootData, set }: { shootData: any, set: React.D
           spread: randomInRange(50, 70),
           particleCount: randomInRange(50, 100),
           origin: { y: 0.6 },
-        }); s
+        });
       }
 
 
@@ -116,7 +116,7 @@ export function TargetUpload ({ shootData, set }: { shootData: any, set: React.D
   }
 
   return (
-    <Card className="w-screen">
+    <Card className="w-screen md:w-full overflow-x-hidden">
       <CardHeader>
         <div className="flex flex-row justify-between w-full">
           <div className="flex flex-col justify-between">
@@ -157,15 +157,15 @@ export function TargetUpload ({ shootData, set }: { shootData: any, set: React.D
             <img
               src={preview || "/placeholder.svg"}
               alt="Target preview"
-              className="mb-4 max-h-[150px] object-contain"
+              className="mb-4 max-h-[150px] object-cover"
             />
           ) : (
             <div className="flex justify-center items-center bg-muted/30 mb-4 rounded-md w-full max-h-[200px] aspect-square">
               <Upload className="w-10 h-10 text-muted-foreground" />
             </div>
           )}
-          <p className="text-muted-foreground text-sm">Klicken und Bild auswählen</p>
-          <p className="mt-1 text-muted-foreground text-xs">PNG, JPG or WEBP</p>
+          {!file && <p className="text-muted-foreground text-sm">Klicken und Bild auswählen</p>}
+          {!file && <p className="mt-1 text-muted-foreground text-xs">PNG, JPG or WEBP</p>}
           <input id="target-upload" type="file" accept="*/*" className="hidden" onChange={handleFileChange} />
         </div>
 

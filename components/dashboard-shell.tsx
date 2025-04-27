@@ -19,6 +19,7 @@ export function DashboardShell () {
       console.log("localData", localData);
       if (localData !== null) {
         const parsedData = JSON.parse(localData);
+        parsedData.aktuelleSchussDaten.id = '-1'
         setData(parsedData);
       } else {
         setData({
@@ -44,8 +45,8 @@ export function DashboardShell () {
   }
 
   return (
-    <div className="relative flex flex-col flex-grow w-screen min-h-screen">
-      <header className="top-0 z-10 sticky bg-background border-b w-screen">
+    <div className="relative flex flex-col flex-grow w-screen min-h-screen overflow-x-hidden">
+      <header className="top-0 z-10 sticky bg-background border-b w-screen md:w-full overflow-x-hidden">
         <div className="flex items-center px-4 md:px-6 h-16">
           <div className="flex items-center gap-2 font-semibold">
             <Image src={"/ssvh.png"} className="rounded-lg w-auto h-10" alt="Logo" width={32} height={32} />
