@@ -47,10 +47,6 @@ export function HistoricalData ({ shootData, set }: { shootData: any, set: React
           <CardTitle>Verlauf</CardTitle>
           <CardDescription></CardDescription>
         </div>
-        <Button variant="outline" size="sm">
-          <Download className="mr-2 w-4 h-4" />
-          Export
-        </Button>
       </CardHeader>
       <CardContent>
         <div className="flex items-center gap-4 mb-4">
