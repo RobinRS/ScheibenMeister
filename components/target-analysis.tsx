@@ -11,6 +11,8 @@ import { Area, AreaChart, CartesianGrid, LabelList, XAxis, YAxis } from "rechart
 import {
   ChartConfig,
   ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart"
@@ -96,12 +98,13 @@ export function TargetAnalysis ({ shootData, set, className }: { shootData: any,
               axisLine={true}
               tickMargin={8}
             />
+            <ChartLegend content={<ChartLegendContent />} />
 
             <ChartTooltip
               cursor={true}
               content={<ChartTooltipContent indicator="dot" />}
             />
-            {Object.keys(chartData[0]).map((weaponName) => {
+            {chartData.length > 0 && Object.keys(chartData[0]).length > 0 && Object.keys(chartData[0]).map((weaponName) => {
               if (weaponName !== "id") {
                 console.log(weaponName, chartConfig[weaponName]);
                 return (
