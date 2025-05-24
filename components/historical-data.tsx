@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ChevronLeft, ChevronRight, Download, Trash2 } from "lucide-react"
+import { dateFromString } from "@/lib/utils"
 
 // Mock data for demon
 
@@ -21,6 +22,8 @@ export function HistoricalData ({ shootData, set }: { shootData: any, set: React
       item.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.datum.toLowerCase().includes(searchTerm.toLowerCase()),
   )
+  console.log(filteredData[0].datum, dateFromString(filteredData[0].datum))
+  filteredData?.sort(function (a, b) { return dateFromString(b.datum) - dateFromString(a.datum) });
 
 
 
@@ -82,7 +85,7 @@ export function HistoricalData ({ shootData, set }: { shootData: any, set: React
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredData?.reverse().slice(currentPage - 1 * pageSize, currentPage * pageSize).map((item) => (
+              {filteredData?.sort(function (a, b) { return new Date(a.datum) - new Date(b.datum) }).map((item) => (
                 <TableRow key={item.id}>
                   <TableCell>
                     <div className="flex-col text-sm">

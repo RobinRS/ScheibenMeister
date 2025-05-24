@@ -5,8 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 
-import { TrendingUp } from "lucide-react"
-import { Area, AreaChart, CartesianGrid, LabelList, XAxis, YAxis } from "recharts"
+import { CartesianGrid, LabelList, LineChart, Line, XAxis, YAxis, Legend } from "recharts"
 
 import {
   ChartConfig,
@@ -48,7 +47,7 @@ export function TargetAnalysis ({ shootData, set, className }: { shootData: any,
 
     for (let i = 0; i < weaponData.length; i++) {
       const obj = { id: i };
-      obj[weaponName] = weaponData[i].ergebnis.reduce((partialSum, a) => partialSum + a, 0);
+      obj[weaponName] = parseFloat(weaponData[i].ergebnis.reduce((partialSum, a) => partialSum + a, 0)).toFixed(1);
 
       const idObj = chartData.find((a) => a.id == i);
       if (idObj) {
@@ -64,27 +63,14 @@ export function TargetAnalysis ({ shootData, set, className }: { shootData: any,
     };
   });
 
-
-
-  const akErgebnis = shootData.schussDaten?.find((a) => a.id == shootData.aktuelleSchussDaten.id);
-
-  const wd = (a, b) => {
-    return a == undefined ? 'Keine Daten' : b;
-  }
-
-
-
-
   return (
     <Card className={className}>
       <CardHeader>
         <CardTitle>Statstik</CardTitle>
-        <CardDescription></CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-1 py-4">
         <ChartContainer config={chartConfig}>
-          <AreaChart
-            accessibilityLayer
+          <LineChart
             data={chartData}
             margin={{
               left: 12,
@@ -92,42 +78,40 @@ export function TargetAnalysis ({ shootData, set, className }: { shootData: any,
             }}
           >
             <CartesianGrid vertical={false} />
-            <XAxis
-              dataKey="id"
-              tickLine={true}
-              axisLine={true}
-              tickMargin={8}
-            />
-            <ChartLegend content={<ChartLegendContent />} />
+            <Legend />
+
+            <YAxis type="number" domain={['dataMin - 25', 'dataMax + 25']} yAxisId="left" tickCount={3} />
+            <YAxis type="number" domain={['dataMin - 25', 'dataMax + 25']} yAxisId="right" orientation="right" tickCount={3} />
 
             <ChartTooltip
               cursor={true}
-              content={<ChartTooltipContent indicator="dot" />}
+              content={<ChartTooltipContent indicator="dot" nameKey="name" />}
             />
-            {chartData.length > 0 && Object.keys(chartData[0]).length > 0 && Object.keys(chartData[0]).map((weaponName) => {
+            {chartData.length > 0 && Object.keys(chartData[0]).length > 0 && Object.keys(chartData[0]).map((weaponName, idx) => {
               if (weaponName !== "id") {
                 console.log(weaponName, chartConfig[weaponName]);
                 return (
-                  <Area
+                  <Line
                     key={weaponName}
                     dataKey={weaponName}
                     type="natural"
+                    yAxisId={idx % 2 === 0 ? "left" : "right"}
                     fill={chartConfig[weaponName].color}
                     fillOpacity={0.4}
-                    stroke={chartConfig[weaponName].color}
-                    stackId="a"><LabelList
-                      position="top"
+                    stroke={chartConfig[weaponName].color}>
+                    <LabelList
+                      position={idx % 2 === 0 ? "top" : "bottom"}
                       offset={12}
                       className="fill-foreground"
-                      fontSize={12}
+                      fontSize={16}
                     />
-                  </Area>
+                  </Line>
                 )
               }
             })}
 
 
-          </AreaChart>
+          </LineChart>
         </ChartContainer>
       </CardContent>
     </Card>
