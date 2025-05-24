@@ -83,7 +83,6 @@ export function HistoricalData ({ shootData, set }: { shootData: any, set: React
               <TableRow>
                 <TableHead>Info</TableHead>
                 <TableHead>Runden</TableHead>
-                <TableHead>Aktion</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
