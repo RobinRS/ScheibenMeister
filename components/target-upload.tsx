@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState, useEffect, useRef } from "react"
-import { Camera, ImagePlus, Upload, Loader2 } from "lucide-react"
+import { Camera, ImagePlus, Upload, Loader2, PlusCircle } from "lucide-react"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
@@ -351,6 +351,13 @@ export function TargetUpload ({ shootData, set }: { shootData: any, set: React.D
 
                       </div>
                     ))}
+                  <Button variant="outline" className="mt-2" onClick={() => {
+                    const ergebnis = newResult.ergebnis || [];
+                    ergebnis.push(0);
+                    setNewResult({ ...newResult, ergebnis });
+                  }}>
+                    <PlusCircle className="mr-2 w-4 h-4" />
+                  </Button>
 
 
                   {isProcessing && (
