@@ -94,23 +94,21 @@ export function HistoricalData ({ shootData, set }: { shootData: any, set: React
                       <p>{shootData.waffen?.filter(w => w.id == item.waffenId)[0].name}</p>
                       <p>{item.datum.includes(",") ? item.datum.split(",")[0] : item.datum}</p>
                       <Badge className="mt-2">{parseFloat(item.ergebnis.reduce((a, b) => a + b, 0)).toFixed(1)}</Badge>
+                      <div className="flex items-center gap-2">
+                        <Button variant="ghost" size="icon" onClick={() => {
+                          const updatedData = shootData.schussDaten.filter((d) => d.id !== item.id)
+                          set({ ...shootData, schussDaten: updatedData })
+                        }}>
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-2">
                       {item.ergebnis.map((score, idx) => (
-                        <Input key={idx} type="number" dataset-index={0} className="w-20 text-black" value={item.ergebnis[idx]} onChange={(e) => { changeShootingData(e, item.id, idx) }} />
+                        <Input key={idx} type="number" dataset-index={0} className="w-20" value={item.ergebnis[idx]} onChange={(e) => { changeShootingData(e, item.id, idx) }} />
                       ))}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="icon" onClick={() => {
-                        const updatedData = shootData.schussDaten.filter((d) => d.id !== item.id)
-                        set({ ...shootData, schussDaten: updatedData })
-                      }}>
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
