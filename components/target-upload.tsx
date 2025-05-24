@@ -2,23 +2,44 @@
 
 import type React from "react"
 
-import { useState } from "react"
-import { Upload, Loader2 } from "lucide-react"
+import { useState, useEffect, useRef } from "react"
+import { Camera, ImagePlus, Upload, Loader2 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { createWorker, PSM } from 'tesseract.js';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 
 export function TargetUpload ({ shootData, set }: { shootData: any, set: React.Dispatch<React.SetStateAction<any>> }) {
   const [file, setFile] = useState<File | null>(null)
-  const [preview, setPreview] = useState<string | null>(null)
+  const [videoStream, setVideoStream] = useState<MediaStream | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
   const [progress, setProgress] = useState(0)
+  const [rem, setRem] = useState(0)
+  const [wPercentage, setWidthPercentage] = useState(0)
+  const [dialogOpen, setDialogOpen] = useState(false)
+
+  useEffect(() => {
+    setRem(parseFloat(getComputedStyle(document.documentElement).fontSize))
+    const handleResize = () => {
+      const width = window.innerWidth
+      setWidthPercentage(width / 100)
+    }
+    handleResize()
+    window.addEventListener('resize', handleResize)
+  }, [])
 
 
-  const tesseractWorker = async () => {
+  const tesseractWorker = async (fileParam: File) => {
     const worker = await createWorker('deu', 1, {
       logger: m => {
         if (m.status === 'recognizing text') {
@@ -27,23 +48,47 @@ export function TargetUpload ({ shootData, set }: { shootData: any, set: React.D
       },
     });
 
-
     await worker.setParameters({
-      tessedit_char_whitelist: "0123456789.*",
+      tessedit_char_whitelist: '0123456789.,WertungLGiga',
       tessedit_pageseg_mode: PSM.SPARSE_TEXT,
     });
-
-
-    console.log(file)
-    if (file == null) {
-      return;
-    }
     try {
-      const res = await worker.recognize(file);
-      console.log(JSON.stringify(res.data));
+      const res = await worker.recognize(file == null ? fileParam : file, { rotateAuto: true }, { blocks: true, box: true });
 
-      const { data: { text } } = res;
+      const { data: { text, box, blocks } } = res;
       const lines = text.split('\n');
+
+      const canvas = document.getElementById("canvas") as HTMLCanvasElement;
+      const context = canvas.getContext("2d");
+      if (!context) {
+        console.error("Canvas context not found");
+        return;
+      }
+      blocks?.forEach((block: any) => {
+        const { x0, y0, x1, y1 } = block.bbox;
+        context.strokeStyle = 'red';
+        context.lineWidth = 2;
+        context.strokeRect(x0, y0, x1 - x0, y1 - y0);
+        // Draw the text above the bounding box
+        context.fillStyle = 'red';
+        context.font = '12px Arial';
+        context.fillText(block.text, x0, y0 - 5);
+      })
+
+      // Group blocks by near y coordinates
+      const groupedBlocks: { [key: string]: any[] } = {};
+      blocks?.forEach((block: any) => {
+        const key = Math.round(block.bbox.y0 / 10) * 10; // Group by y coordinate rounded to nearest 10
+        if (!groupedBlocks[key]) {
+          groupedBlocks[key] = [];
+        }
+        groupedBlocks[key].push(block);
+      });
+      console.log("Grouped blocks:", groupedBlocks);
+
+
+
+
 
       const scores = lines.map(line => {
         const match = line.match(/(\d+(\.\d+)?)/);
@@ -52,6 +97,7 @@ export function TargetUpload ({ shootData, set }: { shootData: any, set: React.D
         }
         return null;
       }).filter(score => score !== null);
+
       const avgScore = JSON.parse(JSON.stringify(scores)).slice((scores.length - 4), scores.length).filter((s) => s >= 7 && s <= 11.2)[0];
       let fScores = scores.filter(score => score >= 80 && score <= 120).map(score => parseFloat(score.toFixed(1)));
 
@@ -63,6 +109,8 @@ export function TargetUpload ({ shootData, set }: { shootData: any, set: React.D
       if (fScores.length > 4) {
         fScores = fScores.slice((fScores.length - 4), fScores.length)
       }
+      setDialogOpen(false)
+
       setIsProcessing(false)
       const clone = { ...shootData }
       clone.counter = parseInt(clone.counter) + 1;
@@ -71,59 +119,29 @@ export function TargetUpload ({ shootData, set }: { shootData: any, set: React.D
       set(clone);
 
       if (avgScore > 9.5) {
-
-
         confetti({
-          angle: randomInRange(55, 125),
-          spread: randomInRange(50, 70),
-          particleCount: randomInRange(50, 100),
+          angle: 90,
+          spread: 69,
+          particleCount: 80,
           origin: { y: 0.6 },
         });
       }
-
-
     } catch (error) {
       console.error(error);
-
     } finally {
       await worker.terminate();
     }
   }
 
-  const randomInRange = (min, max) => {
-    return Math.random() * (max - min) + min;
-  }
-
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0]
-    if (selectedFile) {
-      setFile(selectedFile)
-      const reader = new FileReader()
-      reader.onload = () => {
-        setPreview(reader.result as string)
-      }
-      reader.readAsDataURL(selectedFile)
-    }
-  }
-
-  const processImage = () => {
-    if (!file) return
-
-    setIsProcessing(true)
-    setProgress(0)
-    tesseractWorker();
-  }
-
   return (
-    <Card className="w-screen md:w-full overflow-x-hidden">
+    <Card className="md:w-full overflow-x-hidden">
       <CardHeader>
         <div className="flex flex-row justify-between w-full">
           <div className="flex flex-col justify-between">
-            <CardTitle>Bild hochladen</CardTitle>
+            <CardTitle>{shootData.waffen?.find((a: { id: string }) => a.id == shootData.aktuelleWaffe.id).name}</CardTitle>
             <DropdownMenu>
               <DropdownMenuTrigger className="inline-block">
-                <CardDescription className="float-start w-full text-left">Gewähr: {shootData.waffen?.find((a: { id: string }) => a.id == shootData.aktuelleWaffe.id).name}</CardDescription>
+                <CardDescription className="float-start w-full text-left">Ergebniss hinzufügen</CardDescription>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 {shootData.waffen?.map((weapon: { id: string, name: string }) => (
@@ -135,50 +153,158 @@ export function TargetUpload ({ shootData, set }: { shootData: any, set: React.D
                       set(clone)
                     }}
                   >
-                    {weapon.name}
+                    {weapon.name !== '' ? weapon.name : 'Gewehr ' + weapon.id}
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-          <div>
-            <Button onClick={processImage} disabled={!file || isProcessing} className="w-full">
-              {isProcessing ? "Verarbeitung läuft..." : "Bild auswerten"}
-            </Button>
+          <div className="flex">
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Camera className="w-4 h-4" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="">
+                <DialogHeader>
+                  <DialogTitle>Ergebniss hinzufügen</DialogTitle>
+                  <DialogDescription>
+                    Bild aufnehmen oder hochladen {videoStream !== null}
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="flex flex-col mx-auto w-full h-full">
+                  <canvas height={rem * 24 * 5} width={wPercentage * 80 * 5} className="bg-gray-200 rounded-lg w-full h-96" id="canvas" />
+                  <video height={rem * 24 * 5} width={wPercentage * 80 * 5} className="hidden z-50 rounded-lg w-full h-96" id="videoStream" playsInline muted />
+                  <div className="flex justify-between items-center mt-2">
+                    <Button variant="outline" className="mr-2 w-1/2" onClick={() => {
+                      const canvas = document.getElementById("canvas") as HTMLCanvasElement;
+                      const video = document.getElementById("videoStream") as HTMLVideoElement;
+                      video.width = canvas.width;
+                      video.height = canvas.height;
+                      navigator.mediaDevices.getUserMedia({
+                        audio: false,
+                        video: {
+                          width: { ideal: 1280 },
+                          height: { ideal: 720 },
+                        },
+                      })
+                        .then((stream) => {
+                          video.srcObject = stream;
+                          setVideoStream(stream);
+                          video.play();
+                          console.log("Camera started");
+                          const imgOverlay = new Image();
+                          imgOverlay.src = "/overlay.png"; // Optional: Add an overlay image
+                          imgOverlay.onload = () => {
+                            const context = canvas.getContext("2d");
+                            if (context) {
+                              context.drawImage(imgOverlay, 0, 0, canvas.width, canvas.height);
+                            }
+                          }
+
+                          setInterval(() => {
+                            const canvas = document.getElementById("canvas") as HTMLCanvasElement;
+                            const context = canvas.getContext("2d");
+                            if (context && video.readyState === video.HAVE_ENOUGH_DATA) {
+                              context.clearRect(0, 0, canvas.width, canvas.height);
+                              const aspectRatio = video.videoWidth / video.videoHeight;
+                              const newWidth = (canvas.width);
+                              const newHeight = newWidth / aspectRatio;
+                              context.drawImage(video, 0, 0, newWidth, newHeight);
+                              if (imgOverlay.complete) {
+                                context.drawImage(imgOverlay, 0, 0, canvas.width, canvas.height);
+                              }
+                            }
+                          }, 1000 / 25); // 30 FPS
+                        })
+                        .catch((err) => console.error("Error accessing camera: ", err));
+                    }
+
+                    }>
+                      <Camera className="mr-2 w-4 h-4" />
+                      Aufnehmen
+                    </Button>
+                    <Button variant="outline" className="ml-2 w-1/2" onClick={() => {
+                      const input = document.getElementById("preview-upload") as HTMLInputElement;
+                      input.click();
+                    }}>
+                      <input type="file" id="preview-upload" accept="image/*" className="hidden" onChange={(e) => {
+                        const targetFile = e.target.files?.[0];
+                        if (targetFile) {
+                          if (targetFile.type.startsWith("image/")) {
+                            const reader = new FileReader();
+                            reader.onload = (event) => {
+                              const img = new Image();
+                              img.onload = () => {
+                                const canvas = document.getElementById("canvas") as HTMLCanvasElement;
+                                const context = canvas.getContext("2d");
+                                if (context) {
+                                  console.log("Context not null");
+                                  context.clearRect(0, 0, canvas.width, canvas.height);
+                                  const aspectRatio = img.width / img.height;
+                                  const newWidth = canvas.width;
+                                  const newHeight = newWidth / aspectRatio;
+                                  context.drawImage(img, 0, 0, newWidth, newHeight);
+                                }
+                              };
+                              img.src = event.target?.result as string;
+                            };
+                            reader.readAsDataURL(targetFile);
+                          }
+                        }
+                      }}></input>
+                      <ImagePlus className="mr-2 w-4 h-4" />
+                      Galerie
+                    </Button>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button type="submit" onClick={() => {
+                    const video = document.getElementById("videoStream") as HTMLVideoElement;
+                    video.pause();
+                    videoStream?.getTracks().forEach(track => track.stop());
+
+                    const canvas = document.getElementById("canvas") as HTMLCanvasElement;
+                    const fileStream = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
+                    const byteString = atob(fileStream.split(',')[1]);
+                    const ab = new ArrayBuffer(byteString.length);
+                    const ia = new Uint8Array(ab);
+                    for (let i = 0; i < byteString.length; i++) {
+                      ia[i] = byteString.charCodeAt(i);
+                    }
+                    const blob = new Blob([ab], { type: "image/png" });
+                    const file = new File([blob], "target.png", { type: "image/png" });
+                    setTimeout(() => {
+                      setFile(file);
+                    }, 500);
+
+                    setTimeout(() => {
+                      console.log("File ready for processing:", file);
+                      if (!file) return;
+                      console.log("File selected:", file);
+                      setIsProcessing(true);
+                      setProgress(0);
+                      tesseractWorker(file);
+                    }, 1000);
+                  }}>Auswerten</Button>
+                  {isProcessing && (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span className="text-sm">Verarbeitung läuft...</span>
+                      </div>
+                      <Progress value={progress} className="h-2" />
+                    </div>
+                  )}
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div
-          className="flex flex-col justify-center items-center hover:bg-muted/50 p-6 border-2 border-dashed rounded-lg transition-colors cursor-pointer"
-          onClick={() => document.getElementById("target-upload")?.click()}
-        >
-          {preview ? (
-            <img
-              src={preview || "/placeholder.svg"}
-              alt="Target preview"
-              className="mb-4 max-h-[150px] object-cover"
-            />
-          ) : (
-            <div className="flex justify-center items-center bg-muted/30 mb-4 rounded-md w-full max-h-[200px] aspect-square">
-              <Upload className="w-10 h-10 text-muted-foreground" />
-            </div>
-          )}
-          {!file && <p className="text-muted-foreground text-sm">Klicken und Bild auswählen</p>}
-          {!file && <p className="mt-1 text-muted-foreground text-xs">PNG, JPG or WEBP</p>}
-          <input id="target-upload" type="file" accept="*/*" className="hidden" onChange={handleFileChange} />
-        </div>
-
-        {isProcessing && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Loader2 className="w-4 h-4 animate-spin" />
-              <span className="text-sm">Processing image...</span>
-            </div>
-            <Progress value={progress} className="h-2" />
-          </div>
-        )}
-      </CardContent>
-    </Card>
+    </Card >
   )
 }
