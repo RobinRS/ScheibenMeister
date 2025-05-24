@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ChevronLeft, ChevronRight, Download } from "lucide-react"
+import { ChevronLeft, ChevronRight, Download, Trash2 } from "lucide-react"
 
 // Mock data for demon
 
@@ -82,7 +82,8 @@ export function HistoricalData ({ shootData, set }: { shootData: any, set: React
             <TableHeader>
               <TableRow>
                 <TableHead>Info</TableHead>
-                <TableHead colSpan={4}>Runden</TableHead>
+                <TableHead>Runden</TableHead>
+                <TableHead>Aktion</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -100,6 +101,16 @@ export function HistoricalData ({ shootData, set }: { shootData: any, set: React
                       {item.ergebnis.map((score, idx) => (
                         <Input key={idx} type="number" dataset-index={0} className="w-20 text-black" value={item.ergebnis[idx]} onChange={(e) => { changeShootingData(e, item.id, idx) }} />
                       ))}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Button variant="ghost" size="icon" onClick={() => {
+                        const updatedData = shootData.schussDaten.filter((d) => d.id !== item.id)
+                        set({ ...shootData, schussDaten: updatedData })
+                      }}>
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
