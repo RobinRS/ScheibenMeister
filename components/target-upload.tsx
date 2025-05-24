@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState, useEffect, useRef } from "react"
-import { Camera, ImagePlus, Upload, Loader2, PlusCircle } from "lucide-react"
+import { CalendarIcon, Camera, ImagePlus, Upload, Loader2, PlusCircle } from "lucide-react"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
@@ -19,7 +19,14 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
-import { clear } from "console"
+import { format } from "date-fns"
+import { Calendar } from "@/components/ui/calendar"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { cn } from "@/lib/utils"
 
 export function TargetUpload ({ shootData, set }: { shootData: any, set: React.Dispatch<React.SetStateAction<any>> }) {
   const [file, setFile] = useState<File | null>(null)
@@ -32,6 +39,7 @@ export function TargetUpload ({ shootData, set }: { shootData: any, set: React.D
 
   const [newResult, setNewResult] = useState({});
   const { toast } = useToast();
+  const [date, setDate] = useState<Date>(new Date())
 
   useEffect(() => {
     setRem(parseFloat(getComputedStyle(document.documentElement).fontSize))
@@ -132,7 +140,7 @@ export function TargetUpload ({ shootData, set }: { shootData: any, set: React.D
       const clone = { ...shootData }
       setNewResult({
         id: "" + clone.counter,
-        datum: new Date().toLocaleString(),
+        datum: date?.toLocaleString(),
         ergebnis: fScores,
         avgRunde: (fScores.reduce((a, b) => a + b, 0) / fScores.length).toFixed(1),
         waffenId: clone.aktuelleWaffe.id
@@ -199,8 +207,8 @@ export function TargetUpload ({ shootData, set }: { shootData: any, set: React.D
                 <div className="flex flex-col mx-auto w-full h-full">
                   <canvas height={rem * 24 * 5} width={wPercentage * 80 * 5} className="bg-gray-200 rounded-lg w-full h-96" id="canvas" />
                   <video height={rem * 24 * 5} width={wPercentage * 80 * 5} className="hidden z-50 rounded-lg w-full h-96" id="videoStream" playsInline muted />
-                  <div className="flex justify-between items-center mt-2">
-                    <Button variant="outline" id="takePicture" className="mr-2 w-1/2" onClick={() => {
+                  <div className="flex justify-between items-center gap-2 mt-2">
+                    <Button variant="outline" id="takePicture" className="flex-grow" onClick={() => {
                       const canvas = document.getElementById("canvas") as HTMLCanvasElement;
                       const video = document.getElementById("videoStream") as HTMLVideoElement;
                       video.width = canvas.width;
@@ -246,10 +254,9 @@ export function TargetUpload ({ shootData, set }: { shootData: any, set: React.D
                     }
 
                     }>
-                      <Camera className="mr-2 w-4 h-4" />
-                      Aufnehmen
+                      <Camera className="w-4 h-4" />
                     </Button>
-                    <Button variant="outline" className="ml-2 w-1/2" onClick={() => {
+                    <Button variant="outline" className="flex-grow" onClick={() => {
                       const input = document.getElementById("preview-upload") as HTMLInputElement;
                       input.click();
                     }}>
@@ -290,9 +297,30 @@ export function TargetUpload ({ shootData, set }: { shootData: any, set: React.D
                           }
                         }
                       }}></input>
-                      <ImagePlus className="mr-2 w-4 h-4" />
-                      Galerie
+                      <ImagePlus className="w-4 h-4" />
                     </Button>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "w-40 justify-start text-left font-normal",
+                            !date && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon />
+                          {date ? format(date, "PPP") : <span>Pick a date</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="p-0 w-auto">
+                        <Calendar
+                          mode="single"
+                          selected={date}
+                          onSelect={setDate}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
                 </div>
                 <DialogFooter>
@@ -349,13 +377,15 @@ export function TargetUpload ({ shootData, set }: { shootData: any, set: React.D
                             }}
                           />))}
 
+                        {Object.keys(newResult).length > 0 && newResult?.ergebnis?.length < 6 && <PlusCircle className="w-4 h-4" onClick={() => {
+                          const ergebnis = newResult.ergebnis || [];
+                          ergebnis.push(0);
+                          setNewResult({ ...newResult, ergebnis });
+                        }} />}
+
                       </div>
                     ))}
-                  {Object.keys(newResult).length > 0 && newResult?.ergebnis?.length < 4 && <PlusCircle className="w-4 h-4" onClick={() => {
-                    const ergebnis = newResult.ergebnis || [];
-                    ergebnis.push(0);
-                    setNewResult({ ...newResult, ergebnis });
-                  }} />}
+
 
 
                   {isProcessing && (
