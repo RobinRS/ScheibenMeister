@@ -120,26 +120,21 @@ export function TargetAnalysis ({ shootData, set, className }: { shootData: any,
                 <div className="grid grid-cols-2">
                   <div>
                     <p className="font-medium text-sm">Ergebniss</p>
-                    <div className="font-bold text-xl md:text-3xl">{wd(akErgebnis, akErgebnis?.ergebnis?.reduce((a, b) => parseFloat(a) + parseFloat(b), 0).toFixed(1))}{akErgebnis && '/'}{akErgebnis && (110.0 * akErgebnis?.ergebnis?.length).toFixed(0)}</div>
+                    <div className="font-bold text-xl md:text-3xl">{wd(akErgebnis, akErgebnis?.ergebnis?.reduce((a, b) => parseFloat(a) + parseFloat(b), 0).toFixed(1))}</div>
                   </div>
                   <div className="flex flex-col items-end">
-                    <p className="font-medium text-sm">⌀ Schuss</p>
-                    <div className="font-bold text-xl md:text-3xl">{wd(akErgebnis, akErgebnis?.avg)}</div>
+                    <p className="font-medium text-sm">Runden</p>
+                    <div className="flex flex-wrap gap-2">
+                      {akErgebnis && shootData.schussDaten?.find((a) => a.id == shootData.aktuelleSchussDaten.id).ergebnis.map((score, idx) => {
+                        return (
+                          <Badge key={score + "-" + idx} variant="outline" className="px-3 py-1">
+                            {score}
+                          </Badge>
+                        )
+                      })}
+                    </div>
                   </div>
 
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <p className="font-medium text-sm">{akErgebnis && 'Runden'}</p>
-                <div className="flex flex-wrap gap-2">
-                  {akErgebnis && shootData.schussDaten?.find((a) => a.id == shootData.aktuelleSchussDaten.id).ergebnis.map((score, idx) => {
-                    return (
-                      <Badge key={score + "-" + idx} variant="outline" className="px-3 py-1">
-                        {score}
-                      </Badge>
-                    )
-                  })}
                 </div>
               </div>
 

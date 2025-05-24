@@ -33,7 +33,7 @@ export function ModeToggle ({ shootData, set }: { shootData: any, set: React.Dis
       <DropdownMenuContent align="end">
         <DropdownMenuItem onClick={() => { setDialogOpen(!dialogOpen) }}>Gewehr ändern</DropdownMenuItem>
         <DropdownMenuItem>Daten exportieren</DropdownMenuItem>
-        <DropdownMenuItem onClick={() => { localStorage.removeItem("shootData") }}>Zurücksetzen</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => { localStorage.removeItem("shootData"); location.reload() }}>Zurücksetzen</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

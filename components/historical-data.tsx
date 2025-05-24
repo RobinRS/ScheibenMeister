@@ -81,24 +81,27 @@ export function HistoricalData ({ shootData, set }: { shootData: any, set: React
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Datum</TableHead>
-                <TableHead>Waffe</TableHead>
-                <TableHead>Avg.</TableHead>
+                <TableHead>Info</TableHead>
                 <TableHead colSpan={4}>Runden</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredData?.reverse().slice(currentPage - 1 * pageSize, currentPage * pageSize).map((item) => (
                 <TableRow key={item.id}>
-                  <TableCell>{item.datum.includes(",") ? item.datum.split(",")[0] : item.datum}</TableCell>
-                  <TableCell>{shootData.waffen?.filter(w => w.id == item.waffenId)[0].name}</TableCell>
                   <TableCell>
-                    <Badge variant={item.avg >= 9 ? "default" : "outline"}>{item.avg}</Badge>
+                    <div className="flex-col text-sm">
+                      <p>{shootData.waffen?.filter(w => w.id == item.waffenId)[0].name}</p>
+                      <p>{item.datum.includes(",") ? item.datum.split(",")[0] : item.datum}</p>
+                      <Badge className="mt-2">{parseFloat(item.ergebnis.reduce((a, b) => a + b, 0)).toFixed(1)}</Badge>
+                    </div>
                   </TableCell>
-                  <TableCell><Input type="number" dataset-index={0} className="w-20 text-black" value={item.ergebnis[0]} onChange={(e) => { changeShootingData(e, item.id, 0) }} /></TableCell>
-                  <TableCell><Input type="number" dataset-index={0} className="w-20 text-black" value={item.ergebnis[1]} onChange={(e) => { changeShootingData(e, item.id, 1) }} /></TableCell>
-                  <TableCell><Input type="number" dataset-index={0} className="w-20 text-black" value={item.ergebnis[2]} onChange={(e) => { changeShootingData(e, item.id, 2) }} /></TableCell>
-                  <TableCell><Input type="number" dataset-index={0} className="w-20 text-black" value={item.ergebnis[3]} onChange={(e) => { changeShootingData(e, item.id, 3) }} /></TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap gap-2">
+                      {item.ergebnis.map((score, idx) => (
+                        <Input key={idx} type="number" dataset-index={0} className="w-20 text-black" value={item.ergebnis[idx]} onChange={(e) => { changeShootingData(e, item.id, idx) }} />
+                      ))}
+                    </div>
+                  </TableCell>
                 </TableRow>
               ))}
               {(filteredData == undefined || filteredData?.length === 0) && (
@@ -113,11 +116,11 @@ export function HistoricalData ({ shootData, set }: { shootData: any, set: React
         </div>
 
         <div className="flex justify-end items-center space-x-2 py-4">
-          <Button variant="outline" size="sm" disabled>
+          <Button variant="outline" size="sm" onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))} disabled={currentPage === 1}>
             <ChevronLeft className="w-4 h-4" />
             Vorherige
           </Button>
-          <Button variant="outline" size="sm" disabled>
+          <Button variant="outline" size="sm" onClick={() => setCurrentPage((prev) => prev + 1)} disabled={currentPage * pageSize >= filteredData?.length}>
             Nächste
             <ChevronRight className="w-4 h-4" />
           </Button>

@@ -18,6 +18,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import { useToast } from "@/hooks/use-toast"
+import { clear } from "console"
 
 export function TargetUpload ({ shootData, set }: { shootData: any, set: React.Dispatch<React.SetStateAction<any>> }) {
   const [file, setFile] = useState<File | null>(null)
@@ -27,6 +29,9 @@ export function TargetUpload ({ shootData, set }: { shootData: any, set: React.D
   const [rem, setRem] = useState(0)
   const [wPercentage, setWidthPercentage] = useState(0)
   const [dialogOpen, setDialogOpen] = useState(false)
+
+  const [newResult, setNewResult] = useState({});
+  const { toast } = useToast();
 
   useEffect(() => {
     setRem(parseFloat(getComputedStyle(document.documentElement).fontSize))
@@ -71,7 +76,7 @@ export function TargetUpload ({ shootData, set }: { shootData: any, set: React.D
         context.strokeRect(x0, y0, x1 - x0, y1 - y0);
         // Draw the text above the bounding box
         context.fillStyle = 'red';
-        context.font = '12px Arial';
+        context.font = '20px Arial';
         context.fillText(block.text, x0, y0 - 5);
       })
 
@@ -97,40 +102,58 @@ export function TargetUpload ({ shootData, set }: { shootData: any, set: React.D
         }
         return null;
       }).filter(score => score !== null);
-
-      const avgScore = JSON.parse(JSON.stringify(scores)).slice((scores.length - 4), scores.length).filter((s) => s >= 7 && s <= 11.2)[0];
       let fScores = scores.filter(score => score >= 80 && score <= 120).map(score => parseFloat(score.toFixed(1)));
 
       console.log(fScores);
       if (fScores.length === 0) {
-        console.error("No valid scores found");
-        return;
+        fScores = [0, 0, 0, 0];
+        toast({
+          title: "Fehlgeschlagen",
+          description: "Keine gültigen Treffer gefunden. Bitte überprüfen Sie das Bild.",
+          action: (
+            <Button variant="outline" onClick={() => {
+              setIsProcessing(false);
+              setProgress(0);
+              setNewResult({});
+              document.getElementById("takePicture")?.click();
+            }}>
+              <span>Erneut versuchen</span>
+            </Button>
+          )
+        }
+        );
       }
       if (fScores.length > 4) {
         fScores = fScores.slice((fScores.length - 4), fScores.length)
       }
-      setDialogOpen(false)
+
 
       setIsProcessing(false)
       const clone = { ...shootData }
-      clone.counter = parseInt(clone.counter) + 1;
-      clone.schussDaten.push({ id: "" + clone.counter, datum: new Date().toLocaleString(), ergebnis: fScores, avg: avgScore, avgRunde: (fScores.reduce((a, b) => a + b, 0) / fScores.length).toFixed(1), waffenId: clone.aktuelleWaffe.id });
-      clone.aktuelleSchussDaten = { id: "" + clone.counter };
-      set(clone);
+      setNewResult({
+        id: "" + clone.counter,
+        datum: new Date().toLocaleString(),
+        ergebnis: fScores,
+        avgRunde: (fScores.reduce((a, b) => a + b, 0) / fScores.length).toFixed(1),
+        waffenId: clone.aktuelleWaffe.id
+      });
 
-      if (avgScore > 9.5) {
-        confetti({
-          angle: 90,
-          spread: 69,
-          particleCount: 80,
-          origin: { y: 0.6 },
-        });
-      }
     } catch (error) {
       console.error(error);
     } finally {
       await worker.terminate();
     }
+  }
+
+  const insertNewResult = () => {
+    const clone = { ...shootData }
+    debugger;
+    clone.counter = parseInt(clone.counter) + 1;
+    clone.schussDaten.push(newResult);
+    clone.aktuelleSchussDaten = { id: "" + clone.counter };
+    set(clone);
+    setNewResult({});
+    setDialogOpen(false);
   }
 
   return (
@@ -177,7 +200,7 @@ export function TargetUpload ({ shootData, set }: { shootData: any, set: React.D
                   <canvas height={rem * 24 * 5} width={wPercentage * 80 * 5} className="bg-gray-200 rounded-lg w-full h-96" id="canvas" />
                   <video height={rem * 24 * 5} width={wPercentage * 80 * 5} className="hidden z-50 rounded-lg w-full h-96" id="videoStream" playsInline muted />
                   <div className="flex justify-between items-center mt-2">
-                    <Button variant="outline" className="mr-2 w-1/2" onClick={() => {
+                    <Button variant="outline" id="takePicture" className="mr-2 w-1/2" onClick={() => {
                       const canvas = document.getElementById("canvas") as HTMLCanvasElement;
                       const video = document.getElementById("videoStream") as HTMLVideoElement;
                       video.width = canvas.width;
@@ -185,6 +208,7 @@ export function TargetUpload ({ shootData, set }: { shootData: any, set: React.D
                       navigator.mediaDevices.getUserMedia({
                         audio: false,
                         video: {
+                          facingMode: "environment", // Use rear camera
                           width: { ideal: 1280 },
                           height: { ideal: 720 },
                         },
@@ -203,7 +227,7 @@ export function TargetUpload ({ shootData, set }: { shootData: any, set: React.D
                             }
                           }
 
-                          setInterval(() => {
+                          window.interval = setInterval(() => {
                             const canvas = document.getElementById("canvas") as HTMLCanvasElement;
                             const context = canvas.getContext("2d");
                             if (context && video.readyState === video.HAVE_ENOUGH_DATA) {
@@ -230,9 +254,19 @@ export function TargetUpload ({ shootData, set }: { shootData: any, set: React.D
                       input.click();
                     }}>
                       <input type="file" id="preview-upload" accept="image/*" className="hidden" onChange={(e) => {
+                        const video = document.getElementById("videoStream") as HTMLVideoElement;
+                        video.pause();
+                        videoStream?.getTracks().forEach(track => track.stop());
+
+                        setIsProcessing(false);
+                        setProgress(0);
+                        setNewResult({});
+
                         const targetFile = e.target.files?.[0];
                         if (targetFile) {
+                          console.log("Selected file:", targetFile);
                           if (targetFile.type.startsWith("image/")) {
+                            console.log("Selected file:", targetFile);
                             const reader = new FileReader();
                             reader.onload = (event) => {
                               const img = new Image();
@@ -241,11 +275,13 @@ export function TargetUpload ({ shootData, set }: { shootData: any, set: React.D
                                 const context = canvas.getContext("2d");
                                 if (context) {
                                   console.log("Context not null");
+
                                   context.clearRect(0, 0, canvas.width, canvas.height);
                                   const aspectRatio = img.width / img.height;
                                   const newWidth = canvas.width;
                                   const newHeight = newWidth / aspectRatio;
                                   context.drawImage(img, 0, 0, newWidth, newHeight);
+                                  console.log("Image drawn on canvas");
                                 }
                               };
                               img.src = event.target?.result as string;
@@ -260,7 +296,8 @@ export function TargetUpload ({ shootData, set }: { shootData: any, set: React.D
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button type="submit" onClick={() => {
+                  {Object.keys(newResult).length == 0 && <Button type="submit" onClick={() => {
+                    clearInterval(window.interval);
                     const video = document.getElementById("videoStream") as HTMLVideoElement;
                     video.pause();
                     videoStream?.getTracks().forEach(track => track.stop());
@@ -287,7 +324,35 @@ export function TargetUpload ({ shootData, set }: { shootData: any, set: React.D
                       setProgress(0);
                       tesseractWorker(file);
                     }, 1000);
-                  }}>Auswerten</Button>
+                  }}>Auswerten</Button>}
+
+
+                  {Object.keys(newResult).length > 0 && (
+                    <Button className="mt-2" type="submit" onClick={() => {
+                      insertNewResult();
+                    }}>Ergebniss speichern</Button>
+                  )}
+
+                  {Object.keys(newResult).length > 0 && (
+                    newResult.ergebnis && newResult.ergebnis.length > 0 && (
+                      <div className="flex flex-row justify-evenly gap-2">
+                        {newResult.ergebnis.map((score: number, index: number) => (
+                          <input
+                            type="number"
+                            className="p-1 border rounded w-20 text-center"
+                            value={score}
+                            key={index}
+                            onChange={(e) => {
+                              const newScores = [...newResult.ergebnis];
+                              newScores[index] = parseFloat(e.target.value);
+                              setNewResult({ ...newResult, ergebnis: newScores });
+                            }}
+                          />))}
+
+                      </div>
+                    ))}
+
+
                   {isProcessing && (
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">

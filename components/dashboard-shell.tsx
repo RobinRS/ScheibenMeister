@@ -8,6 +8,7 @@ import { TargetUpload } from "@/components/target-upload"
 import { TargetAnalysis } from "@/components/target-analysis"
 import { HistoricalData } from "@/components/historical-data"
 import { useState, useEffect } from "react";
+import { Toaster } from "./ui/toaster";
 
 export function DashboardShell () {
 
@@ -43,6 +44,7 @@ export function DashboardShell () {
 
   return Object.keys(data).length > 0 ? (
     <div className="relative flex flex-col flex-grow w-screen min-h-screen overflow-x-hidden">
+      <Toaster />
       <header className="top-0 z-10 sticky bg-background border-b w-screen md:w-full overflow-x-hidden">
         <div className="flex items-center px-4 md:px-6 h-16">
           <div className="flex items-center gap-2 font-semibold">
