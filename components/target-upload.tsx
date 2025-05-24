@@ -335,7 +335,7 @@ export function TargetUpload ({ shootData, set }: { shootData: any, set: React.D
 
                   {Object.keys(newResult).length > 0 && (
                     newResult.ergebnis && newResult.ergebnis.length > 0 && (
-                      <div className="flex flex-row justify-evenly gap-2">
+                      <div className="flex flex-row flex-wrap justify-evenly gap-2">
                         {newResult.ergebnis.map((score: number, index: number) => (
                           <input
                             type="number"
@@ -351,11 +351,11 @@ export function TargetUpload ({ shootData, set }: { shootData: any, set: React.D
 
                       </div>
                     ))}
-                  <PlusCircle className="mr-2 w-4 h-4" onClick={() => {
+                  {newResult.ergebnis.length < 4 && <PlusCircle className="w-4 h-4" onClick={() => {
                     const ergebnis = newResult.ergebnis || [];
                     ergebnis.push(0);
                     setNewResult({ ...newResult, ergebnis });
-                  }} />
+                  }} />}
 
 
                   {isProcessing && (
