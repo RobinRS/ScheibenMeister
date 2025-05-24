@@ -351,13 +351,11 @@ export function TargetUpload ({ shootData, set }: { shootData: any, set: React.D
 
                       </div>
                     ))}
-                  <Button variant="outline" className="mt-2" onClick={() => {
+                  <PlusCircle className="mr-2 w-4 h-4" onClick={() => {
                     const ergebnis = newResult.ergebnis || [];
                     ergebnis.push(0);
                     setNewResult({ ...newResult, ergebnis });
-                  }}>
-                    <PlusCircle className="mr-2 w-4 h-4" />
-                  </Button>
+                  }} />
 
 
                   {isProcessing && (
