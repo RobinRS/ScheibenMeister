@@ -351,7 +351,7 @@ export function TargetUpload ({ shootData, set }: { shootData: any, set: React.D
 
                       </div>
                     ))}
-                  {newResult.ergebnis.length < 4 && <PlusCircle className="w-4 h-4" onClick={() => {
+                  {Object.keys(newResult).length > 0 && newResult?.ergebnis?.length < 4 && <PlusCircle className="w-4 h-4" onClick={() => {
                     const ergebnis = newResult.ergebnis || [];
                     ergebnis.push(0);
                     setNewResult({ ...newResult, ergebnis });
