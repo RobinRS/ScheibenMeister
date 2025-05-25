@@ -142,7 +142,6 @@ export function TargetUpload ({ shootData, set }: { shootData: any, set: React.D
         id: "" + clone.counter,
         datum: date?.toLocaleString(),
         ergebnis: fScores,
-        avgRunde: (fScores.reduce((a, b) => a + b, 0) / fScores.length).toFixed(1),
         waffenId: clone.aktuelleWaffe.id
       });
 
