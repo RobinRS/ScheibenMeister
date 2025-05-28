@@ -25,7 +25,7 @@ export function HistoricalData ({ shootData, set }: { shootData: any, set: React
   const filteredData = shootData.schussDaten?.filter(
     (item) =>
       item.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.datum.toLowerCase().includes(searchTerm.toLowerCase()),
+      item.datum?.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
   filteredData?.sort(function (a, b) { return dateFromString(b.datum) - dateFromString(a.datum) });
@@ -156,7 +156,7 @@ export function HistoricalData ({ shootData, set }: { shootData: any, set: React
                       </DropdownMenu>
 
 
-                      <p>{item.datum.includes(",") ? item.datum.split(",")[0] : item.datum}</p>
+                      <p>{(item.datum !== undefined && item.datum?.includes(",")) ? item.datum.split(",")[0] : item.datum}</p>
                       <Badge className="mt-2">{parseFloat(item.ergebnis.reduce((a, b) => a + b, 0)).toFixed(1)}</Badge>
                       <div className="flex items-center gap-2">
                         <Button variant="ghost" size="icon" onClick={() => {
