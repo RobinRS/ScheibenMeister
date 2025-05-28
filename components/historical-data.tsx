@@ -12,6 +12,7 @@ import { dateFromString } from "@/lib/utils"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog"
 import { Textarea } from "./ui/textarea"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu"
+import { parse } from "path"
 
 // Mock data for demon
 
@@ -21,25 +22,26 @@ export function HistoricalData ({ shootData, set }: { shootData: any, set: React
   const [currentPage, setCurrentPage] = useState(1)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [json, setJson] = useState(JSON.stringify(shootData, null, 2))
+  const [tmpData, setTmpData] = useState(shootData);
 
-  const filteredData = shootData.schussDaten?.filter(
+  const [weaponName, setWeaponName] = useState("all");
+
+  tmpData?.schussDaten?.filter(
     (item) =>
       item.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.datum?.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+  );
 
-  filteredData?.sort(function (a, b) { return dateFromString(b.datum) - dateFromString(a.datum) });
+  tmpData?.schussDaten?.sort(function (a, b) { return dateFromString(b.datum) - dateFromString(a.datum) });
 
   const changeShootingData = (e: React.ChangeEvent<HTMLInputElement>, id, index) => {
     for (let i = 0; i < shootData.schussDaten.length; i++) {
       if (shootData.schussDaten[i].id === id) {
         shootData.schussDaten[i].ergebnis[index] = parseFloat(e.target.value)
-        //shootData.schussDaten[i].avg = shootData.schussDaten[i].ergebnis.reduce((a, b) => a + b, 0) / shootData.schussDaten[i].ergebnis.length
         break
       }
     }
     set({ ...shootData, schussDaten: shootData.schussDaten })
-    // localStorage.setItem("shootData", JSON.stringify({ ...shootData, schussDaten: shootData.schussDaten }))
   }
 
 
@@ -81,7 +83,7 @@ export function HistoricalData ({ shootData, set }: { shootData: any, set: React
             </DialogContent>
           </Dialog>
           <Button variant="outline" size="sm" className="ml-2" onClick={() => {
-            const csvContent = "data:text/csv;charset=utf-8," + filteredData.map(e => `${e.id},${e.datum},${e.ergebnis.join(",")}`).join("\n");
+            const csvContent = "data:text/csv;charset=utf-8," + tmpData.schussDaten.map(e => `${e.id},${e.datum},${e.ergebnis.join(",")}`).join("\n");
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
@@ -95,16 +97,10 @@ export function HistoricalData ({ shootData, set }: { shootData: any, set: React
       </CardHeader>
       <CardContent>
         <div className="flex items-center gap-4 mb-4">
-          <div className="flex-1 w-8/12">
-            <Input
-              placeholder="Suchen..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="max-w-sm"
-            />
-          </div>
-          <Select defaultValue="all">
-            <SelectTrigger className="w-[180px]">
+          <Select defaultValue="all" onValueChange={(value) => {
+            setWeaponName(value);
+          }}>
+            <SelectTrigger className="w-full">
               <SelectValue placeholder="Gewehrfilter" />
             </SelectTrigger>
             <SelectContent>
@@ -127,8 +123,9 @@ export function HistoricalData ({ shootData, set }: { shootData: any, set: React
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredData?.sort(function (a, b) { return new Date(a.datum) - new Date(b.datum) }).map((item) => (
-                <TableRow key={item.id}>
+              {tmpData?.schussDaten?.map((item) => (
+
+                <TableRow key={item.id} hidden={weaponName !== "all" && item.waffenId !== shootData.waffen?.find(w => w.name.includes(weaponName))?.id}>
                   <TableCell>
                     <div className="flex-col text-sm">
                       <DropdownMenu>
@@ -154,9 +151,7 @@ export function HistoricalData ({ shootData, set }: { shootData: any, set: React
                           ))}
                         </DropdownMenuContent>
                       </DropdownMenu>
-
-
-                      <p>{(item.datum !== undefined && item.datum?.includes(",")) ? item.datum.split(",")[0] : item.datum}</p>
+                      <p>{(item.datum !== undefined && item.datum?.includes(",")) ? item.datum.split(",")[0] : "Kein Datum"}</p>
                       <Badge className="mt-2">{parseFloat(item.ergebnis.reduce((a, b) => a + b, 0)).toFixed(1)}</Badge>
                       <div className="flex items-center gap-2">
                         <Button variant="ghost" size="icon" onClick={() => {
@@ -177,7 +172,7 @@ export function HistoricalData ({ shootData, set }: { shootData: any, set: React
                   </TableCell>
                 </TableRow>
               ))}
-              {(filteredData == undefined || filteredData?.length === 0) && (
+              {(tmpData?.schussDaten == undefined || tmpData?.schussDaten?.length === 0) && (
                 <TableRow>
                   <TableCell colSpan={8} className="py-4 text-muted-foreground text-center">
                     Kein Ergebniss gefunden
@@ -193,7 +188,7 @@ export function HistoricalData ({ shootData, set }: { shootData: any, set: React
             <ChevronLeft className="w-4 h-4" />
             Vorherige
           </Button>
-          <Button variant="outline" size="sm" onClick={() => setCurrentPage((prev) => prev + 1)} disabled={currentPage * pageSize >= filteredData?.length}>
+          <Button variant="outline" size="sm" onClick={() => setCurrentPage((prev) => prev + 1)} disabled={currentPage * pageSize >= tmpData?.schussDaten?.length}>
             Nächste
             <ChevronRight className="w-4 h-4" />
           </Button>

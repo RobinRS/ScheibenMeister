@@ -15,6 +15,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart"
+import { dateFromString } from "@/lib/utils"
 
 // Mock data for demonstration
 
@@ -38,10 +39,21 @@ export function TargetAnalysis ({ shootData, set, className }: { shootData: any,
       lastWeaponId[data.waffenId].push(data);
     }
   })
+  // Get highest count of results
+  const maxCount = Math.max(...Object.values(lastWeaponId).map((a) => a.length));
+  // Fill missing results with empty objects
+  Object.keys(lastWeaponId).forEach((weaponId) => {
+    while (lastWeaponId[weaponId].length < maxCount) {
+      lastWeaponId[weaponId].push({ datum: "", ergebnis: [0], waffenId: weaponId });
+    }
+  });
+
 
   Object.keys(lastWeaponId).map((weaponId) => {
     const weaponData = lastWeaponId[weaponId];
-    console.log(shootData);
+
+    weaponData?.sort(function (a, b) { return dateFromString(b.datum) - dateFromString(a.datum) });
+
     const weaponName = shootData.waffen.find((a) => a.id == weaponId)?.name || "Gewehr " + weaponId;
     const weaponColor = shootData.waffen.find((a) => a.id == weaponId)?.farbe || "hsl(var(--chart-" + weaponId + "))";
 
@@ -89,7 +101,6 @@ export function TargetAnalysis ({ shootData, set, className }: { shootData: any,
             />
             {chartData.length > 0 && Object.keys(chartData[0]).length > 0 && Object.keys(chartData[0]).map((weaponName, idx) => {
               if (weaponName !== "id") {
-                console.log(weaponName, chartConfig[weaponName]);
                 return (
                   <Line
                     key={weaponName}
