@@ -6,7 +6,7 @@ export function cn (...inputs: ClassValue[]) {
 }
 
 export function dateFromString (dateString: string): Date {
-  if (dateString.includes(".")) {
+  if (dateString !== undefined && dateString.includes(".")) {
     const parts = dateString.split(".");
     if (parts.length !== 3) {
       throw new Error("Invalid date format. Expected format: DD.MM.YYYY");
